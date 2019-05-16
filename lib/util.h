@@ -1,5 +1,5 @@
-#ifndef _PERF_PROFILE_UTIL_H_
-#define _PERF_PROFILE_UTIL_H_
+#ifndef _PROFILE_UTIL_H_
+#define _PROFILE_UTIL_H_
 
 #define _GNU_SOURCE
 
@@ -113,4 +113,4 @@ static inline unsigned int __roundup_2(unsigned int num)
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-#endif /* _PERF_PROFILE_UTIL_H_ */
+#endif /* _PROFILE_UTIL_H_ */

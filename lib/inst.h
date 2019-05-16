@@ -1,5 +1,5 @@
-#ifndef _PERF_PROFILE_INST_H_
-#define _PERF_PROFILE_INST_H_
+#ifndef _PROFILE_INST_H_
+#define _PROFILE_INST_H_
 
 
 /*
@@ -59,4 +59,4 @@ static inline void barrier(void)
 	asm volatile("":::"memory");
 }
 
-#endif /* _PERF_PROFILE_INST_H_  */
+#endif /* _PROFILE_INST_H_  */

@@ -1,5 +1,5 @@
-#ifndef _PERF_LIST_H
-#define _PERF_LIST_H
+#ifndef _PROFILE_LIST_H_
+#define _PROFILE_LIST_H_
 
 #include "util.h"
 

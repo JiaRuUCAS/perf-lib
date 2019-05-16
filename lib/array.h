@@ -1,5 +1,5 @@
-#ifndef _PERF_PROFILE_ARRAY_H_
-#define _PERF_PROFILE_ARRAY_H_
+#ifndef _PROFILE_ARRAY_H_
+#define _PROFILE_ARRAY_H_
 
 #include <stdint.h>
 
@@ -19,4 +19,4 @@ static inline void *array__entry(struct array *arr, int idx)
 	return &arr->contents[idx * arr->elem_size];
 }
 
-#endif /* _PERF_PROFILE_ARRAY_H_ */
+#endif /* _PROFILE_ARRAY_H_ */
