@@ -1,5 +1,5 @@
-#ifndef _PERF_UTIL_H_
-#define _PERF_UTIL_H_
+#ifndef _PERF_PROFILE_UTIL_H_
+#define _PERF_PROFILE_UTIL_H_
 
 #define _GNU_SOURCE
 
@@ -17,6 +17,22 @@
 #include <linux/perf_event.h>
 #include <sys/syscall.h>
 #include <sys/resource.h>
+
+#ifndef __maybe_unused
+#define __maybe_unused __attribute__((unused))
+#endif
+
+#ifndef __packed
+#define __packed __attribute__((__packed__))
+#endif
+
+#ifndef likely
+#define likely(x) __builtin_expect(!!(x), 1)
+#endif
+
+#ifndef unlikely
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#endif
 
 #define LOG_ERROR(format, ...) \
 		fprintf(stderr, "[ERROR] %s %d: " format "\n", \
@@ -78,18 +94,4 @@ static inline unsigned int __roundup_2(unsigned int num)
 			const typeof(((type *)0)->member) *__mptr = (ptr); \
 			(type*)((char*)__mptr - offsetof(type,member)); })
 
-static inline unsigned long long rdtsc(void)
-{
-	unsigned hi, lo;
-
-	asm volatile("rdtsc":"=a"(lo), "=d"(hi));
-	return (((unsigned long long)lo) |
-					(((unsigned long long)hi) << 32));
-}
-
-static inline void barrier(void)
-{
-	asm volatile("":::"memory");
-}
-
-#endif /* _PERF_UTIL_H_ */
+#endif /* _PERF_PROFILE_UTIL_H_ */
