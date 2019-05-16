@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT(perf-lib, 0.1)
+AC_INIT(profile, 0.1)
 AC_CONFIG_SRCDIR([lib/inst.h])
 AC_CONFIG_HEADERS([config.h])
 
@@ -10,8 +10,8 @@ LT_INIT
 
 AM_INIT_AUTOMAKE
 
-AC_SUBST([PL_CFLAGS])
-AC_SUBST([PL_LDFLAGS])
+AC_SUBST([PF_CFLAGS])
+AC_SUBST([PF_LDFLAGS])
 
 # Checks for programs.
 AC_PROG_CC
@@ -31,10 +31,10 @@ AC_CHECK_HEADERS([stdint.h unistd.h])
 # Checks for library functions.
 
 # Set default prefix to $(curdir)/build
-PL_SET_DEFAULT_PREFIX
+PF_SET_DEFAULT_PREFIX
 
 # Check debug
-PL_CHECK_DEBUG
+PF_CHECK_DEBUG
 
 
 AC_CONFIG_FILES(Makefile)

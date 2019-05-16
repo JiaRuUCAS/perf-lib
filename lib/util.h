@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 #include <time.h>
@@ -34,6 +35,10 @@
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #endif
 
+#ifndef is_dir_sep
+#define is_dir_sep(c) ((c) == '/')
+#endif
+
 #define LOG_ERROR(format, ...) \
 		fprintf(stderr, "[ERROR] %s %d: " format "\n", \
 						__FILE__, __LINE__, ##__VA_ARGS__);
@@ -42,7 +47,16 @@
 		fprintf(stdout, "[INFO] %s %d: " format "\n", \
 						__FILE__, __LINE__, ##__VA_ARGS__);
 
-#define PAGE_SIZE 4096
+#ifdef PF_DEBUG
+#define LOG_DEBUG(format, ...) \
+		fprintf(stderr, "[DEBUG] %s %d: " format "\n", \
+						__FILE__, __LINE__, ##__VA_ARGS__);
+#else
+#define LOG_DEBUG(format, ...)
+#endif
+
+extern unsigned int page_size;
+extern int cacheline_size;
 
 static inline void *zalloc(size_t size)
 {
@@ -88,10 +102,15 @@ static inline unsigned int __roundup_2(unsigned int num)
 	return num;
 }
 
+/* For the buffer size of strerror_r */
+#define STRERR_BUFSIZE	128
+
 #define offsetof(type, member) ((size_t) & ((type*)0)->member)
 
 #define container_of(ptr, type, member) ({ \
 			const typeof(((type *)0)->member) *__mptr = (ptr); \
 			(type*)((char*)__mptr - offsetof(type,member)); })
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 #endif /* _PERF_PROFILE_UTIL_H_ */

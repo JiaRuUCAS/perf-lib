@@ -9,6 +9,7 @@ compile
 depcomp
 install-sh
 *.la
+*.a
 libtool
 ltmain.sh
 missing
@@ -23,3 +24,7 @@ lib/.dirstamp
 test/.deps/*
 test/*.o
 test/.dirstamp
+tools/.deps/*
+tools/*.o
+tools/.dirstamp
+profile
