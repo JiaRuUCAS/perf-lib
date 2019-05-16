@@ -17,3 +17,9 @@ stamp-h1
 test-api
 *.lo
 *.o
+lib/.deps/*
+lib/*.lo
+lib/.dirstamp
+test/.deps/*
+test/*.o
+test/.dirstamp
