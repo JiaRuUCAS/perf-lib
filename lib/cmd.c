@@ -6,7 +6,7 @@ static const char *argv0_path;
 
 
 const char *
-profile_extract_argv0_path(const char *argv0)
+cmd__extract_argv0_path(const char *argv0)
 {
 	const char *slash;
 

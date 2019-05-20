@@ -105,7 +105,7 @@ main(int argc, const char **argv)
 	LOG_DEBUG("page size %u, cacheline size %d",
 					page_size, cacheline_size);
 
-	profile_extract_argv0_path(argv[0]);
+	cmd__extract_argv0_path(argv[0]);
 
 	/* looking for options */
 	argv++;
