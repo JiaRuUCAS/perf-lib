@@ -1,3 +1,3 @@
 aclocal
-libtoolize -f -c
+#libtoolize -f -c
 autoreconf --install --force

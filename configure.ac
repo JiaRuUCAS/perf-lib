@@ -6,6 +6,8 @@ AC_INIT(profile, 0.1)
 AC_CONFIG_SRCDIR([lib/inst.h])
 AC_CONFIG_HEADERS([config.h])
 
+AC_CONFIG_MACRO_DIRS([m4])
+
 LT_INIT
 
 AM_INIT_AUTOMAKE
@@ -22,7 +24,6 @@ AC_SEARCH_LIBS([pthread_create], [pthread])
 AC_SEARCH_LIBS([dlopen], [dl])
 AC_SEARCH_LIBS([pow], [m])
 
-
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h unistd.h])
 
@@ -36,7 +37,10 @@ PF_SET_DEFAULT_PREFIX
 # Check debug
 PF_CHECK_DEBUG
 
+# Check kernel build environment
+PF_CHECK_LINUX
 
 AC_CONFIG_FILES(Makefile)
+AC_CONFIG_FILES(kmod/Makefile)
 
 AC_OUTPUT

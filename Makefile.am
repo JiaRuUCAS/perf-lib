@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
-#SUBDIRS = \
-#		  ipsec
+ACLOCAL_AMFLAGS = -I m4
+SUBDIRS = kmod
 
 AM_CFLAGS = -Wstrict-prototypes
 AM_CFLAGS += -Werror
@@ -24,6 +24,8 @@ bin_PROGRAMS =
 lib_LIBRARIES =
 lib_LTLIBRARIES =
 
+modules_install:
+	cd kmod && $(MAKE) modules_install
 
 include lib/automake.mk
 include tools/automake.mk
