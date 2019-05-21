@@ -1,4 +1,3 @@
-# -*- makefile -*-
 export builddir = @abs_builddir@
 export srcdir = @abs_srcdir@
 export top_srcdir = @abs_top_srcdir@
@@ -7,17 +6,28 @@ export VERSION = @VERSION@
 
 include $(srcdir)/automake.mk
 
+ifneq ($(KERNELRELEASE),)
+
 #default: $(build_links)
+
+#syscall_addr = 0x$(shell cat /proc/kallsyms | grep sys_init_module | awk '{print $1}')
+syscall_addr := 0x$(shell cat /proc/kallsyms | grep sys_init_module | awk '{print $$1}')
+ccflags-y := -g
+ccflags-y += -DSYS_INIT_MODULE_ADDR=$(syscall_addr)
 
 obj-m += perfprofile.o
 
 perfprofile-objs = $(notdir $(patsubst %.c,%.o,$(perfprofile_sources)))
 
+else
 
 #$(foreach s,$(sort $(perfprofile_sources)), \
 #		  $(eval $(notdir $(s)): ; ln -s $(srcdir)/../$(s) $@))
 
+#syscall_addr := 0x$(shell cat /proc/kallsyms | grep sys_init_module | awk '{print $$1}')
+
 all: default
+
 distdir: clean
 #install:
 #	install-data:
@@ -37,7 +47,6 @@ clean:
 					modules.order .tmp_versions/perfprofile.mod
 
 distclean: clean
-		rm -f kcompat.h
 
 ifneq ($(KSRC),)
 
@@ -72,34 +81,4 @@ modules_install:
 
 endif
 
-# Much of the kernel build system in this file is derived from Intel's
-# e1000 distribution, with the following license:
-
-################################################################################
-#
-# Intel PRO/1000 Linux driver
-# Copyright(c) 1999 - 2007, 2009 Intel Corporation.
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms and conditions of the GNU General Public License,
-# version 2, as published by the Free Software Foundation.
-#
-# This program is distributed in the hope it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along with
-# this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# The full GNU General Public License is included in this distribution in
-# the file called "COPYING".
-#
-# Contact Information:
-# Linux NICS <linux.nics@intel.com>
-# e1000-devel Mailing List <e1000-devel@lists.sourceforge.net>
-# Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
-#
-################################################################################
-
+endif

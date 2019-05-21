@@ -6,7 +6,13 @@
 static int __init
 perfprofile_init(void)
 {
+
+#ifdef SYS_INIT_MODULE_ADDR
+	printk(KERN_ALERT "load perfprofile module: sys_init_module 0x%lx\n",
+				   SYS_INIT_MODULE_ADDR);
+#else
 	printk(KERN_ALERT "load perfprofile module\n");
+#endif
 	return 0;
 }
 
