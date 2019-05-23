@@ -10,10 +10,11 @@ ifneq ($(KERNELRELEASE),)
 
 #default: $(build_links)
 
-#syscall_addr = 0x$(shell cat /proc/kallsyms | grep sys_init_module | awk '{print $1}')
-syscall_addr := 0x$(shell cat /proc/kallsyms | grep sys_init_module | awk '{print $$1}')
+syscall_tbl_addr = 0x$(shell cat /proc/kallsyms | grep " sys_call_table" | awk '{print $$1}')
+sys_perf_addr := 0x$(shell cat /proc/kallsyms | grep sys_perf_event_open | awk '{print $$1}')
 ccflags-y := -g
-ccflags-y += -DSYS_INIT_MODULE_ADDR=$(syscall_addr)
+ccflags-y += -DSYS_PERF_ADDR=$(sys_perf_addr)
+ccflags-y += -DSYSCALL_TBL_ADDR=$(syscall_tbl_addr)
 
 obj-m += perfprofile.o
 

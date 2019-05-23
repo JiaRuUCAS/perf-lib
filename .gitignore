@@ -27,3 +27,9 @@ tools/.deps/*
 tools/*.o
 tools/.dirstamp
 profile
+kmod/*.cmd
+kmod/.tmp_versions
+kmod/*.symvers
+kmod/*.order
+kmod/*.ko
+kmod/*.mod.c
