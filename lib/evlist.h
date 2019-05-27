@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "util.h"
+#include "list.h"
 
 struct thread_map;
 struct prof_evsel;
@@ -25,7 +26,7 @@ void prof_evlist__init(struct prof_evlist *evlist);
 void prof_evlist__delete(struct prof_evlist *evlist);
 
 int prof_evlist__add_from_str(struct prof_evlist *evlist,
-				char *str);
+				const char *str);
 
 void prof_evlist__dump(struct prof_evlist *evlist);
 
@@ -40,6 +41,14 @@ void prof_evlist__stop(struct prof_evlist *evlist);
 //				uint64_t *vals);
 
 int prof_evlist__counter_nr(struct prof_evlist *evlist);
+
+int prof_evlist__create_threadmap(struct prof_evlist *evlist, int pid);
+
+static inline struct
+prof_evsel *prof_evlist__first(struct prof_evlist *evlist)
+{
+	return list_entry(evlist->entries.next, struct prof_evsel, node);
+}
 
 /**
  * __evlist__for_each - iterate thru all the evsels

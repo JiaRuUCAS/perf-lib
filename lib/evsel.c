@@ -11,11 +11,6 @@ prof_evsel__new(struct perf_event_attr *attr,
 {
 	struct prof_evsel *evsel = NULL;
 
-	if (attr == NULL) {
-		LOG_ERROR("attr == NULL");
-		return NULL;
-	}
-
 	evsel = zalloc(sizeof(struct prof_evsel));
 	if (evsel == NULL) {
 		LOG_ERROR("Failed to alloc memory for prof_evsel");
@@ -23,7 +18,10 @@ prof_evsel__new(struct perf_event_attr *attr,
 	}
 
 	evsel->name = strdup(name);
-	prof_evsel__init(evsel, attr, 0);
+
+	if (attr)
+		prof_evsel__init(evsel, attr, 0);
+
 	return evsel;
 }
 
@@ -155,7 +153,9 @@ retry_open:
 						&evsel->attr, pid, -1, -1, 0);
 		if (info->fd < 0) {
 			err = -errno;
-			LOG_ERROR("sys_perf_event_open failed, errno %d", errno);
+			if (errno != 2)
+				LOG_ERROR("sys_perf_event_open failed, errno %d",
+								errno);
 			goto try_fallback;
 		}
 

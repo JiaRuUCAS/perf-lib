@@ -44,7 +44,8 @@ void prof_evlist__delete(struct prof_evlist *evlist)
 	evlist = NULL;
 }
 
-static int __prof_evlist__add(struct prof_evlist *evlist, char *str)
+static int
+__prof_evlist__add(struct prof_evlist *evlist, char *str)
 {
 	struct perf_event_attr attr;
 	char *name = NULL;
@@ -71,7 +72,7 @@ static int __prof_evlist__add(struct prof_evlist *evlist, char *str)
 
 /* Usage: <event1>:<opt_list1>,<event2>:<opt_list2>,...*/
 int prof_evlist__add_from_str(struct prof_evlist *evlist,
-				char *str)
+				const char *str)
 {
 	char *pcur = NULL, *pnext = NULL, *tmp;
 	int len = 0, added = 0;
@@ -161,6 +162,25 @@ int prof_evlist__counter_nr(struct prof_evlist *evlist)
 //
 //	nthreads = thread_map__nr(evlist->threads);
 	return evlist->nr_entries;
+}
+
+/* pid == 0 => current process */
+int
+prof_evlist__create_threadmap(struct prof_evlist *evlist,
+				int pid)
+{
+	struct thread_map *threads = NULL;
+
+	if (pid == 0)
+		threads = thread_map__new(getpid());
+	else
+		threads = thread_map__new(pid);
+
+	if (threads == NULL)
+		return -1;
+
+	evlist->threads = threads;
+	return 0;
 }
 
 //int prof_evlist__read_all(struct prof_evlist *evlist, uint64_t *vals)

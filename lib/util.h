@@ -19,6 +19,8 @@
 #include <sys/syscall.h>
 #include <sys/resource.h>
 
+#include "evsel.h"
+
 #ifndef __maybe_unused
 #define __maybe_unused __attribute__((unused))
 #endif

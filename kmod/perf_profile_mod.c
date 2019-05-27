@@ -18,8 +18,52 @@ sys_perfprofile_event_open(
 				pid_t pid, int cpu, int group_fd,
 				unsigned long flags)
 {
-	printk(KERN_ALERT "perfprofile: new perf_event_open");
-	return orig_perf_event_open(attr_uptr, pid, cpu, group_fd, flags);
+	long ret_fd = -1;
+	struct fd f;
+	struct file *file = NULL;
+	struct perf_event *event = NULL;
+	struct hw_perf_event *hwc = NULL;
+
+	// call the original perf_event_open function
+	ret_fd = orig_perf_event_open(attr_uptr, pid, cpu, group_fd, flags);
+
+	if (ret_fd < 0)
+		return ret_fd;
+
+	// get file structure
+	f = fdget(ret_fd);
+	file = f.file;
+	if (!file) {
+		printk(KERN_ALERT "perfprofile: failed to get file structure");
+		return ret_fd;
+	}
+
+	// get perf event
+	event = file->private_data;
+	hwc = &(event->hw);
+
+    /*
+	 * Checking type of the event.
+	 * Now we only handle hardware-supported event:
+	 * PERF_TYPE_RAW, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE
+	 */
+	switch (event->attr.type) {
+	case PERF_TYPE_RAW:
+	case PERF_TYPE_HARDWARE:
+	case PERF_TYPE_HW_CACHE:
+		break;
+
+	default:
+		return ret_fd;    
+	}
+
+	/* test: print hardware counter informations */
+	printk(KERN_ALERT "config_base 0x%016lx, event_base 0x%016lx, "
+					"event_base_rdpmc 0x%08x, idx 0x%08x",
+					hwc->config_base, hwc->event_base,
+					hwc->event_base_rdpmc, hwc->idx);
+
+	return ret_fd;
 }
 
 static u64 __clear_and_get_cr0(void)

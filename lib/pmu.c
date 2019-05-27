@@ -41,9 +41,6 @@ enum {
 	PROF_PMU_ITLB_WRITE_MISSES,
 	PROF_PMU_ITLB_PREFETCH_REFERENCES,
 	PROF_PMU_ITLB_PREFETCH_MISSES,
-	PROF_PMU_PAGE_FAULTS,
-	PROF_PMU_CONTEXT_SWITCHES,
-	PROF_PMU_CPU_MIGRATIONS,
 	PROF_PMU_MAX,
 };
 
@@ -293,21 +290,6 @@ static struct prof_pmu pmu_list[PROF_PMU_MAX] = {
 					(PERF_COUNT_HW_CACHE_OP_PREFETCH << 8) |
 				 	(PERF_COUNT_HW_CACHE_RESULT_MISS << 16),
 	},
-	[PROF_PMU_PAGE_FAULTS] = {
-		.name = "page-faults",
-		.type = PERF_TYPE_SOFTWARE,
-		.config = PERF_COUNT_SW_PAGE_FAULTS,
-	},
-	[PROF_PMU_CONTEXT_SWITCHES] = {
-		.name = "context-switches",
-		.type = PERF_TYPE_SOFTWARE,
-		.config = PERF_COUNT_SW_CONTEXT_SWITCHES,
-	},
-	[PROF_PMU_CPU_MIGRATIONS] = {
-		.name = "cpu-migrations",
-		.type = PERF_TYPE_SOFTWARE,
-		.config = PERF_COUNT_SW_CPU_MIGRATIONS,
-	},
 };
 
 static bool pmu_is_init = false;
@@ -400,8 +382,6 @@ void prof_pmu__dump(void)
 		if (pmu->is_support) {
 			if (pmu->type == PERF_TYPE_HARDWARE) {
 				LOG_INFO("Event %s\t[HARDWARE]", pmu->name);
-			} else if (pmu->type == PERF_TYPE_SOFTWARE) {
-				LOG_INFO("Event %s\t[SOFTWARE]", pmu->name);
 			} else if (pmu->type == PERF_TYPE_HW_CACHE) {
 				LOG_INFO("Event %s\t[HARDWARE CACHE]", pmu->name);
 			}
