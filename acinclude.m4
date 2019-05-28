@@ -10,6 +10,13 @@ AC_DEFUN([PF_SET_DEFAULT_PREFIX],[
 		AC_MSG_NOTICE([Set default prefix to $prefix])
 	fi])
 
+dnl PF_SET_PAGE_SIZE
+AC_DEFUN([PF_SET_PAGE_SIZE], [
+	PAGE_SIZE=`getconf PAGE_SIZE`
+	AC_MSG_NOTICE([Set page size to $PAGE_SIZE])
+	AC_SUBST([PAGE_SIZE])
+])
+
 dnl Checks for --enable-debug and defines PF_DEBUG if it is specified.
 AC_DEFUN([PF_CHECK_DEBUG],
 	[AC_ARG_ENABLE(

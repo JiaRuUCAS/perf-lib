@@ -4,6 +4,7 @@
 #include "array.h"
 #include "pmu.h"
 #include "threadmap.h"
+#include "inst.h"
 
 struct prof_evsel *
 prof_evsel__new(struct perf_event_attr *attr,
@@ -39,82 +40,125 @@ prof_evsel__init(struct prof_evsel *evsel,
 	INIT_LIST_HEAD(&evsel->node);
 }
 
-static void
-__evsel__free_fd(struct prof_evsel *evsel)
-{
-	array__delete(evsel->fd);
-	evsel->fd = NULL;
-}
-
-static int
-__evsel__alloc_fd(struct prof_evsel *evsel, int nthreads)
-{
-	struct array *arr = NULL;
-	int thread;
-
-	arr = array__new(nthreads, sizeof(int));
-	if (arr == NULL) {
-		LOG_ERROR("Failed to create FD array");
-		evsel->fd = NULL;
-		return -ENOMEM;
-	}
-
-	// init
-	evsel->fd = arr;
-	for (thread = 0; thread < nthreads; thread++)
-		FD(evsel, thread)->fd = -1;
-	return 0;
-}
-
 void
 prof_evsel__disable(struct prof_evsel *evsel, int nthreads)
 {
 	int thread;
+	struct thread_data *data = NULL;
+
+	if (!evsel->is_enable)
+		return;
 
 	for (thread = 0; thread < nthreads; thread++) {
-		if (FD(evsel, thread)->fd == -1)
+		data = &(evsel->per_thread[thread]);
+		if (data->fd < 0)
 			continue;
-		ioctl(FD(evsel, thread)->fd, PERF_EVENT_IOC_DISABLE, 0);
+
+		// unmap
+		if (data->mm_page) {
+			munmap(data->mm_page, PAGE_SIZE);
+			data->mm_page = NULL;
+		}
+
+		// disable event
+		ioctl(data->fd, PERF_EVENT_IOC_DISABLE, 0);
 	}
+
+	evsel->is_enable = 1;
 }
 
-void
+int
 prof_evsel__enable(struct prof_evsel *evsel, int nthreads)
 {
-	int thread;
+	int thread, i;
+	struct thread_data *data = NULL;
+	struct perf_event_mmap_page * pc = NULL;
+
+	if (!evsel->is_open) {
+		LOG_ERROR("Wrong state: the event is not open");
+		return 1;
+	}
+
+	if (evsel->is_enable)
+		return 0;
 
 	for (thread = 0; thread < nthreads; thread++) {
-		if (FD(evsel, thread)->fd == -1)
+		data = &(evsel->per_thread[thread]);
+		if (data->fd < 0)
 			continue;
-		ioctl(FD(evsel, thread)->fd, PERF_EVENT_IOC_RESET, 0);
-		ioctl(FD(evsel, thread)->fd, PERF_EVENT_IOC_ENABLE, 0);
+
+		// enable event
+		ioctl(data->fd, PERF_EVENT_IOC_ENABLE, 0);
+
+		// mmap
+		data->mm_page = mmap(NULL, PAGE_SIZE, PROT_READ,
+						MAP_SHARED, data->fd, 0);
+		if (data->mm_page == MAP_FAILED) {
+			LOG_ERROR("Failed to mmap perf event, err %d", errno);
+			data->mm_page = NULL;
+			goto out_failed;
+		}
+
+		// get hardware counter index
+		pc = (struct perf_event_mmap_page *)data->mm_page;
+		data->hwc_index = pc->index;
 	}
+	evsel->is_enable = 1;
+
+	return 0;
+
+out_failed:
+	for (i = 0; i <= thread; i++) {
+		data = &(evsel->per_thread[thread]);
+		if (data->fd < 0)
+			continue;
+
+		if (data->mm_page) {
+			munmap(data->mm_page, PAGE_SIZE);
+			data->mm_page = NULL;
+		}
+
+		ioctl(data->fd, PERF_EVENT_IOC_DISABLE, 0);
+	}
+	return -1;
 }
 
 void
-prof_evsel__close_fd(struct prof_evsel *evsel, int nthreads)
+prof_evsel__close(struct prof_evsel *evsel)
 {
-	int thread;
-	struct prof_fd_info *info = NULL;
+	int thread, nthreads;
+	struct thread_data *data = NULL;
 
-	prof_evsel__disable(evsel, nthreads);
+	if (!evsel->is_open)
+		return;
+
+	nthreads = thread_map__nr(evsel->threads);
+
+	if (evsel->is_enable)
+		prof_evsel__disable(evsel, nthreads);
 
 	for (thread = 0; thread < nthreads; ++thread) {
-		info = FD(evsel, thread);
-		if (info->fd >= 0) {
-			close(info->fd);
-			info->fd = -1;
-		}
+		data = &(evsel->per_thread[thread]);
+		if (data->fd < 0)
+			continue;
+
+		close(data->fd);
+		data->fd = -1;
 	}
+
+	evsel->is_open = 0;
 }
 
 void
 prof_evsel__delete(struct prof_evsel *evsel)
 {
-	__evsel__free_fd(evsel);
-	thread_map__free(evsel->threads);
+	if (evsel->is_open)
+		prof_evsel__close(evsel);
+
+	evsel->threads = NULL;
 	if (evsel->name)
 		free(evsel->name);
+	free(evsel->per_thread);
 	free(evsel);
 }
 
@@ -123,25 +167,36 @@ prof_evsel__open(struct prof_evsel *evsel,
 				struct thread_map *threads)
 {
 	int nthread = 0, thread, pid = 0, err = 0;
-	struct prof_fd_info *info = NULL;
+	struct thread_data *info = NULL;
 	enum {
 		NO_CHANGE, SET_TO_MAX, INCREASED_MAX,
 	} set_rlimit = NO_CHANGE;
 
-	if (threads == NULL)
-		return -EINVAL;
+	if (threads == NULL) {
+		if (evsel->evlist && evsel->evlist->threads)
+			evsel->threads = evsel->evlist->threads;
+		else {
+			LOG_ERROR("Threadmap is not found");
+			return -EINVAL;
+		}
+	}
+	else
+		evsel->threads = threads;
 
 	nthread = thread_map__nr(threads);
 
-	if (evsel->fd == NULL &&
-					__evsel__alloc_fd(evsel, nthread) < 0) {
-		LOG_ERROR("Failed to create FD");
+	// create per-thread data
+	evsel->per_thread = zalloc(
+					nthread * sizeof(struct thread_data));
+	if (!evsel->per_thread) {
+		LOG_ERROR("Failed to allocate memory for "
+						"per-thread data");
 		return -ENOMEM;
 	}
 
 	for (thread = 0; thread < nthread; thread++) {
-		pid = thread_map__pid(threads, thread);
-		info = FD(evsel, thread);
+		pid = PID(threads, thread);
+		info = &(evsel->per_thread[thread]);
 
 		LOG_DEBUG("Open event %s %u %lu for pid %d",
 						evsel->name,
@@ -162,7 +217,7 @@ retry_open:
 		set_rlimit = NO_CHANGE;
 	}
 
-	evsel->is_open = true;
+	evsel->is_open = 1;
 	return 0;
 
 try_fallback:
@@ -188,24 +243,17 @@ try_fallback:
 	}
 
 	while (--thread >= 0) {
-		if (FD(evsel, thread)->fd < 0)
+		if (FD(evsel, thread) < 0)
 			continue;
-		ioctl(FD(evsel, thread)->fd, PERF_EVENT_IOC_DISABLE, 0);
-		close(FD(evsel, thread)->fd);
-		FD(evsel, thread)->fd = -1;
+		ioctl(FD(evsel, thread), PERF_EVENT_IOC_DISABLE, 0);
+		close(FD(evsel, thread));
+		FD(evsel, thread) = -1;
 	}
-	evsel->is_open = false;
+
+	free(evsel->per_thread);
+	evsel->per_thread = NULL;
+	evsel->is_open = 0;
 	return err;
-}
-
-void
-prof_evsel__close(struct prof_evsel *evsel, int nthreads)
-{
-	if (evsel->fd == NULL)
-		return;
-
-	prof_evsel__close_fd(evsel, nthreads);
-	__evsel__free_fd(evsel);
 }
 
 /* Options:
@@ -273,4 +321,43 @@ prof_evsel__parse(const char *str, struct perf_event_attr *attr)
 	if (opt != NULL)
 		__evsel__parse_opt(opt, attr);
 	return name;
+}
+
+uint64_t
+prof_evsel__read(struct prof_evsel *evsel, int thread)
+{
+	uint64_t data;
+	int fd = -1;
+
+	if (!evsel->is_enable)
+		return 0;
+
+	fd = FD(evsel, thread);
+	if (fd < 0) {
+		LOG_ERROR("Wrong fd value %d", fd);
+		return UINT64_MAX;
+	}
+
+	if (readn(fd, &data, sizeof(uint64_t)) < 0) {
+		LOG_ERROR("Failed to read counter");
+		return UINT64_MAX;
+	}
+
+	return data;
+}
+
+uint64_t
+prof_evsel__rdpmc(struct prof_evsel *evsel, int thread)
+{
+	uint64_t value;
+	uint32_t index;
+
+	if (!evsel->is_enable)
+		return 0;
+
+	index = evsel->per_thread[thread].hwc_index;
+
+	rdpmcl(index - 1, value);
+
+	return value;
 }

@@ -14,7 +14,7 @@ struct bitmap *bitmap__new(unsigned int bit)
 	}
 
 	size = sizeof(struct bitmap) + sizeof(uint8_t) * (real_bit >> 3);
-	if (size >= page_size) {
+	if (size >= PAGE_SIZE) {
 		map = (struct bitmap*)mmap(NULL, size, PROT_READ | PROT_WRITE,
 						MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 		if (map == MAP_FAILED) {

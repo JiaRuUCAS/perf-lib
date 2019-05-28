@@ -18,7 +18,8 @@ static struct thread_map *_thread_map__alloc(int nr)
 	struct thread_map *map = NULL;
 	size_t size = 0;
 
-	size = sizeof(struct thread_map) + sizeof(pid_t) * nr;
+	size = sizeof(struct thread_map)
+			+ sizeof(pid_t) * nr;
 	map = zalloc(size);
 	if (map == NULL) {
 		LOG_ERROR("Failed to allocate %u bytes memory for thread_map",
@@ -35,7 +36,7 @@ struct thread_map *thread_map__new_dummy(void)
 	map = _thread_map__alloc(1);
 	if (map != NULL) {
 		map->nr = 1;
-		map->map[0] = -1;
+		PID(map, 0) = -1;
 	}
 	return map;
 }
@@ -57,7 +58,7 @@ struct thread_map *thread_map__new(pid_t pid)
 	if (map != NULL) {
 		map->nr = items;
 		for (i = 0; i < items; i++) {
-			thread_map__set_pid(map, i, atoi(namelist[i]->d_name));
+			PID(map, i) = atoi(namelist[i]->d_name);
 //			LOG_INFO("pid[%d] %d(%d)", i, thread_map__pid(map, i),
 //							atoi(namelist[i]->d_name));
 		}
@@ -83,6 +84,6 @@ void thread_map__dump(struct thread_map *map)
 
 	nthread = thread_map__nr(map);
 	for (i = 0; i < nthread; i++) {
-		LOG_INFO("%d\t", thread_map__pid(map, i));
+		LOG_INFO("thread %d", PID(map, i));
 	}
 }

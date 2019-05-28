@@ -99,9 +99,6 @@ main(int argc, const char **argv)
 	const char *cmd;
 	unsigned int i = 0;
 
-	page_size = sysconf(_SC_PAGE_SIZE);
-	cacheline_size = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
-
 	LOG_DEBUG("page size %u, cacheline size %d",
 					page_size, cacheline_size);
 

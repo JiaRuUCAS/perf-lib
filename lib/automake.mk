@@ -21,5 +21,4 @@ libprofile_a_SOURCES = lib/array.c		\
 					   lib/evsel.c		\
 					   lib/pmu.c		\
 					   lib/threadmap.c	\
-					   lib/util.c		\
 					   lib/xyarray.h

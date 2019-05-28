@@ -6,7 +6,7 @@
 
 struct thread_map {
 	int nr;
-	pid_t map[];
+	pid_t pid[];
 };
 
 struct thread_map *thread_map__new_dummy(void);
@@ -20,18 +20,7 @@ static inline int thread_map__nr(struct thread_map *map)
 	return map ? map->nr : 1;
 }
 
-static inline pid_t thread_map__pid(struct thread_map *map, int idx)
-{
-	return map->map[idx];
-}
-
-static inline void thread_map__set_pid(struct thread_map *map,
-				int idx, pid_t pid)
-{
-	if (idx >= map->nr)
-		return;
-
-	map->map[idx] = pid;
-}
+#define PID(map, thread)	\
+		((map)->pid[thread])
 
 #endif /* _PROFILE_THREAD_MAP_H_ */

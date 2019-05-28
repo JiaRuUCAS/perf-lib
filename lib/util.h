@@ -57,8 +57,6 @@
 #define LOG_DEBUG(format, ...)
 #endif
 
-extern unsigned int page_size;
-extern int cacheline_size;
 
 static inline void *zalloc(size_t size)
 {

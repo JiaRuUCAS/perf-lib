@@ -1,6 +1,7 @@
 #ifndef _PROFILE_INST_H_
 #define _PROFILE_INST_H_
 
+#define _GNU_SOURCE
 
 /*
  * both i386 and x86_64 returns 64-bit value in edx:eax, but gcc's "A"
@@ -8,7 +9,7 @@
  * edx:eax, while for x86_64 it doesn't mean rdx:rax or edx:eax. Instead,
  * it means rax *or* rdx.
  */
-#ifdef CONFIG_X86_64
+#if defined(__x86_64__)
 /* Using 64-bit values saves one instruction clearing the high half of low */
 #define DECLARE_ARGS(val, low, high)	unsigned long low, high
 #define EAX_EDX_VAL(val, low, high)	((low) | (high) << 32)

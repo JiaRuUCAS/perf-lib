@@ -33,7 +33,7 @@ void prof_evlist__dump(struct prof_evlist *evlist);
 void prof_evlist__set_threads(struct prof_evlist *evlist,
 				struct thread_map *threads);
 
-void prof_evlist__start(struct prof_evlist *evlist);
+int prof_evlist__start(struct prof_evlist *evlist);
 
 void prof_evlist__stop(struct prof_evlist *evlist);
 

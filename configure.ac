@@ -34,6 +34,8 @@ AC_CHECK_HEADERS([stdint.h unistd.h])
 # Set default prefix to $(curdir)/build
 PF_SET_DEFAULT_PREFIX
 
+PF_SET_PAGE_SIZE
+
 # Check debug
 PF_CHECK_DEBUG
 

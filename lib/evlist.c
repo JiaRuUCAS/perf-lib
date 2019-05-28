@@ -23,11 +23,10 @@ void prof_evlist__init(struct prof_evlist *evlist)
 void prof_evlist__delete(struct prof_evlist *evlist)
 {
 	struct prof_evsel *evsel = NULL, *pos = NULL;
-	int nthreads = thread_map__nr(evlist->threads);
 //	int n;
 
 	evlist__for_each_reverse(evlist, evsel) {
-		prof_evsel__close(evsel, nthreads);
+		prof_evsel__close(evsel);
 	}
 
 	thread_map__free(evlist->threads);
@@ -124,14 +123,20 @@ static void prof_evlist__enable(struct prof_evlist *evlist,
 	struct prof_evsel *evsel = NULL;
 
 	evlist__for_each(evlist, evsel) {
-		prof_evsel__enable(evsel, nthreads);
+		if (prof_evsel__enable(evsel, nthreads) < 0)
+			LOG_ERROR("Failed to enable event %s", evsel->name);
 	}
 }
 
-void prof_evlist__start(struct prof_evlist *evlist)
+int prof_evlist__start(struct prof_evlist *evlist)
 {
 	struct prof_evsel *evsel = NULL;
 	int nthreads = 0;
+
+	if (!evlist->threads) {
+		LOG_ERROR("Thread map is not set");
+		return -1;
+	}
 
 	nthreads = thread_map__nr(evlist->threads);
 	evlist__for_each(evlist, evsel) {
@@ -143,6 +148,7 @@ void prof_evlist__start(struct prof_evlist *evlist)
 	}
 
 	prof_evlist__enable(evlist, nthreads);
+	return 0;
 }
 
 void prof_evlist__stop(struct prof_evlist *evlist)
